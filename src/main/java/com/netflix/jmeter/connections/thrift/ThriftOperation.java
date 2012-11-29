@@ -26,6 +26,11 @@ public class ThriftOperation implements Operation
     protected AbstractSerializer colser;
     protected AbstractSerializer valser;
     protected AbstractSerializer kser;
+    
+    private AbstractSerializer<?>[] compositeKeySerializers;
+    private AbstractSerializer<?>[] compositeColumnSerializers;
+    private AbstractSerializer<?>[] compositeValueSerializers;
+
     private CClient client;
     private boolean isCounter;
 
@@ -44,6 +49,13 @@ public class ThriftOperation implements Operation
         this.kser = kser;
         this.colser = colser;
         this.valser = valser;
+    }
+
+    @Override
+    public void compositeSerializers(AbstractSerializer<?>[] compositeKeySerializers, AbstractSerializer<?>[] compositeColumnSerializers, AbstractSerializer<?>[] compositeValueSerializers){
+    	this.compositeKeySerializers = compositeKeySerializers;
+    	this.compositeColumnSerializers = compositeColumnSerializers;
+    	this.compositeValueSerializers = compositeValueSerializers;
     }
 
     @Override

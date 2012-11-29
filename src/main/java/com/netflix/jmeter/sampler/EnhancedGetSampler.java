@@ -1,9 +1,4 @@
-package com.rim.icrs.cassjmeterext.sampler;
-
-import com.netflix.jmeter.connections.a6x.EnhancedAstyanaxOperation;
-import com.netflix.jmeter.sampler.Connection;
-import com.netflix.jmeter.sampler.Operation;
-import com.netflix.jmeter.sampler.OperationException;
+package com.netflix.jmeter.sampler;
 
 public class EnhancedGetSampler extends EnhancedAbstractSampler
 {
@@ -13,10 +8,7 @@ public class EnhancedGetSampler extends EnhancedAbstractSampler
     {
         Operation ops = Connection.getInstance().newOperation(getColumnFamily(), false);
         setSerializers(ops);
-        
-        if(ops instanceof EnhancedAstyanaxOperation){
-        	setCompositeSerializers((EnhancedAstyanaxOperation)ops);
-        }
+        setCompositeSerializers(ops);
               
         return  ops.get(getKey(), getColumnName());
     }    

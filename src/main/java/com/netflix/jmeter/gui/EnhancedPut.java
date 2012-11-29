@@ -1,4 +1,4 @@
-package com.rim.icrs.cassjmeterext.gui;
+package com.netflix.jmeter.gui;
 
 import java.awt.GridBagConstraints;
 
@@ -10,9 +10,9 @@ import javax.swing.JTextField;
 
 import org.apache.jmeter.testelement.TestElement;
 
-import com.rim.icrs.cassjmeterext.gui.components.CompositeSerializerList;
-import com.rim.icrs.cassjmeterext.sampler.EnhancedAbstractSampler;
-import com.rim.icrs.cassjmeterext.sampler.EnhancedPutSampler;
+import com.netflix.jmeter.gui.components.CompositeSerializerList;
+import com.netflix.jmeter.sampler.EnhancedAbstractSampler;
+import com.netflix.jmeter.sampler.EnhancedPutSampler;
 
 public class EnhancedPut extends EnhancedAbstractGUI
 {    
@@ -93,29 +93,34 @@ public class EnhancedPut extends EnhancedAbstractGUI
     @Override
     public void init(JPanel mainPanel, GridBagConstraints labelConstraints, GridBagConstraints editConstraints)
     {
-        addToPanel(mainPanel, labelConstraints, 0, 3, new JLabel("Column Name: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 3, CNAME = new JTextField());
-        addToPanel(mainPanel, labelConstraints, 0, 4, new JLabel("Column Value: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 4, VALUE = new JTextField());
+    	int y = 3;
+        addToPanel(mainPanel, labelConstraints, 0, y, new JLabel("Column Name: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, CNAME = new JTextField());
         
-        addToPanel(mainPanel, labelConstraints, 0, 5, new JLabel("Key Serializer: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 5, KSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
-        addToPanel(mainPanel, editConstraints, 1, 6, COMPOSITE_KSERIALIZERS_LIST = new CompositeSerializerList());
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Column Value: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, VALUE = new JTextField());
+        
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Key Serializer: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, KSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
+        
+        addToPanel(mainPanel, editConstraints, 1, ++y, COMPOSITE_KSERIALIZERS_LIST = new CompositeSerializerList());
         KSERIALIZER.addActionListener(COMPOSITE_KSERIALIZERS_LIST);
         
-        addToPanel(mainPanel, labelConstraints, 0, 7, new JLabel("Column Serializer: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 7, CSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
-        addToPanel(mainPanel, editConstraints, 1, 8, COMPOSITE_CSERIALIZERS_LIST = new CompositeSerializerList());
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Column Serializer: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, CSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
+        
+        addToPanel(mainPanel, editConstraints, 1, ++y, COMPOSITE_CSERIALIZERS_LIST = new CompositeSerializerList());
         CSERIALIZER.addActionListener(COMPOSITE_CSERIALIZERS_LIST);
         
         
-        addToPanel(mainPanel, labelConstraints, 0, 9, new JLabel("Value Serializer: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 9, VSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
-        addToPanel(mainPanel, editConstraints, 1, 10, COMPOSITE_VSERIALIZERS_LIST = new CompositeSerializerList());
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Value Serializer: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, VSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
+        
+        addToPanel(mainPanel, editConstraints, 1, ++y, COMPOSITE_VSERIALIZERS_LIST = new CompositeSerializerList());
         VSERIALIZER.addActionListener(COMPOSITE_VSERIALIZERS_LIST);
         
-        addToPanel(mainPanel, labelConstraints, 0, 11, new JLabel("Counter: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 11, IS_COUNTER = new JCheckBox());
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Counter: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, IS_COUNTER = new JCheckBox());
     }
 
     @Override

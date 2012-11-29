@@ -1,4 +1,4 @@
-package com.rim.icrs.cassjmeterext.gui;
+package com.netflix.jmeter.gui;
 
 import java.awt.GridBagConstraints;
 
@@ -12,10 +12,10 @@ import javax.swing.border.BevelBorder;
 import org.apache.jmeter.testelement.TestElement;
 
 
-import com.rim.icrs.cassjmeterext.gui.components.CompositeSerializerList;
-import com.rim.icrs.cassjmeterext.sampler.EnhancedAbstractSampler;
-import com.rim.icrs.cassjmeterext.sampler.EnhancedBatchPutSampler;
-import com.rim.icrs.cassjmeterext.sampler.EnhancedPutSampler;
+import com.netflix.jmeter.gui.components.CompositeSerializerList;
+import com.netflix.jmeter.sampler.EnhancedAbstractSampler;
+import com.netflix.jmeter.sampler.EnhancedBatchPutSampler;
+import com.netflix.jmeter.sampler.EnhancedPutSampler;
 
 public class EnhancedBatchPut extends EnhancedAbstractGUI
 {
@@ -103,32 +103,36 @@ public class EnhancedBatchPut extends EnhancedAbstractGUI
 
     public void init(JPanel mainPanel, GridBagConstraints labelConstraints, GridBagConstraints editConstraints)
     {   
-    	addToPanel(mainPanel, labelConstraints, 0, 3, new JLabel("Column Value Separator: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 3, NAME_VALUE_SEPARATOR = new JTextArea());
+    	int y = 3;
+    	addToPanel(mainPanel, labelConstraints, 0, y, new JLabel("Column Value Separator: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, NAME_VALUE_SEPARATOR = new JTextArea());
         NAME_VALUE_SEPARATOR.setBorder(new BevelBorder(BevelBorder.LOWERED));
         
-        addToPanel(mainPanel, labelConstraints, 0, 4, new JLabel("Column K/V(eg: Name@@Value): ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 4, NAME_AND_VALUE = new JTextArea());
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Column K/V(eg: Name@@Value): ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, NAME_AND_VALUE = new JTextArea());
         NAME_AND_VALUE.setRows(10);
         NAME_AND_VALUE.setBorder(new BevelBorder(BevelBorder.LOWERED));
 
-        addToPanel(mainPanel, labelConstraints, 0, 5, new JLabel("Key Serializer: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 5, KSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
-        addToPanel(mainPanel, editConstraints, 1, 6, COMPOSITE_KSERIALIZERS_LIST = new CompositeSerializerList());
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Key Serializer: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, KSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
+        
+        addToPanel(mainPanel, editConstraints, 1, ++y, COMPOSITE_KSERIALIZERS_LIST = new CompositeSerializerList());
         KSERIALIZER.addActionListener(COMPOSITE_KSERIALIZERS_LIST);
 
-        addToPanel(mainPanel, labelConstraints, 0, 6, new JLabel("Column Serializer: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 6, CSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
-        addToPanel(mainPanel, editConstraints, 1, 7, COMPOSITE_CSERIALIZERS_LIST = new CompositeSerializerList());
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Column Serializer: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, CSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
+        
+        addToPanel(mainPanel, editConstraints, 1, ++y, COMPOSITE_CSERIALIZERS_LIST = new CompositeSerializerList());
         CSERIALIZER.addActionListener(COMPOSITE_CSERIALIZERS_LIST);
         
-        addToPanel(mainPanel, labelConstraints, 0, 8, new JLabel("Value Serializer: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 8, VSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
-        addToPanel(mainPanel, editConstraints, 1, 9, COMPOSITE_VSERIALIZERS_LIST = new CompositeSerializerList());
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Value Serializer: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, VSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));
+        
+        addToPanel(mainPanel, editConstraints, 1, ++y, COMPOSITE_VSERIALIZERS_LIST = new CompositeSerializerList());
         VSERIALIZER.addActionListener(COMPOSITE_VSERIALIZERS_LIST);
         
-        addToPanel(mainPanel, labelConstraints, 0, 10, new JLabel("Counter: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 10, IS_COUNTER = new JCheckBox());
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Counter: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, IS_COUNTER = new JCheckBox());
     }
 
     @Override

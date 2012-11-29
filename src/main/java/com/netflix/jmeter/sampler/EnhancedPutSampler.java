@@ -1,8 +1,5 @@
-package com.rim.icrs.cassjmeterext.sampler;
+package com.netflix.jmeter.sampler;
 
-import com.netflix.jmeter.sampler.Connection;
-import com.netflix.jmeter.sampler.Operation;
-import com.netflix.jmeter.sampler.OperationException;
 
 public class EnhancedPutSampler extends EnhancedAbstractSampler
 {

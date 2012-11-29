@@ -1,13 +1,10 @@
-package com.rim.icrs.cassjmeterext.sampler;
+package com.netflix.jmeter.sampler;
 
 import java.util.Set;
 
 import com.netflix.astyanax.model.Composite;
 import com.netflix.astyanax.serializers.AbstractSerializer;
 import com.netflix.astyanax.serializers.CompositeSerializer;
-import com.netflix.jmeter.connections.a6x.EnhancedAstyanaxOperation;
-import com.netflix.jmeter.sampler.AbstractSampler;
-import com.netflix.jmeter.sampler.Operation;
 
 public abstract class EnhancedAbstractSampler extends AbstractSampler{
 	
@@ -122,7 +119,7 @@ public abstract class EnhancedAbstractSampler extends AbstractSampler{
     	return AbstractSampler.getSerializerNames();        
     }
     
-    public void setCompositeSerializers(EnhancedAstyanaxOperation ops)
+    public void setCompositeSerializers(Operation ops)
     {       
         ops.compositeSerializers(serializers(getCompositeKSerializerTypes()), serializers(getCompositeCSerializerTypes()), serializers(getCompositeVSerializerTypes()));
     }

@@ -1,10 +1,6 @@
-package com.rim.icrs.cassjmeterext.sampler;
+package com.netflix.jmeter.sampler;
 
-import com.netflix.jmeter.connections.a6x.EnhancedAstyanaxOperation;
-import com.netflix.jmeter.sampler.Connection;
-import com.netflix.jmeter.sampler.Operation;
-import com.netflix.jmeter.sampler.OperationException;
-import com.netflix.jmeter.sampler.AbstractSampler.ResponseData;
+
 
 public class EnhancedGetRangeSliceSampler extends EnhancedAbstractSampler
 {
@@ -19,10 +15,7 @@ public class EnhancedGetRangeSliceSampler extends EnhancedAbstractSampler
     {
         Operation ops = Connection.getInstance().newOperation(getColumnFamily(), false);
         setSerializers(ops);
-        
-        if(ops instanceof EnhancedAstyanaxOperation){
-        	setCompositeSerializers((EnhancedAstyanaxOperation)ops);
-        }
+        setCompositeSerializers(ops);
               
         return ops.rangeSlice(getKey(), getStartName(), getEndName(), isReverse(), getCount());
     }    

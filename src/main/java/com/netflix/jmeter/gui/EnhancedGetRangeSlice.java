@@ -1,4 +1,4 @@
-package com.rim.icrs.cassjmeterext.gui;
+package com.netflix.jmeter.gui;
 
 import java.awt.GridBagConstraints;
 
@@ -12,11 +12,10 @@ import javax.swing.border.BevelBorder;
 
 import org.apache.jmeter.testelement.TestElement;
 
-import com.netflix.jmeter.connections.a6x.EnhancedAstyanaxConnection;
+import com.netflix.jmeter.gui.components.CompositeSerializerList;
+import com.netflix.jmeter.sampler.EnhancedAbstractSampler;
+import com.netflix.jmeter.sampler.EnhancedGetRangeSliceSampler;
 import com.netflix.jmeter.sampler.GetRangeSliceSampler;
-import com.rim.icrs.cassjmeterext.gui.components.CompositeSerializerList;
-import com.rim.icrs.cassjmeterext.sampler.EnhancedAbstractSampler;
-import com.rim.icrs.cassjmeterext.sampler.EnhancedGetRangeSliceSampler;
 
 public class EnhancedGetRangeSlice extends EnhancedAbstractGUI
 {  	
@@ -128,13 +127,6 @@ public class EnhancedGetRangeSlice extends EnhancedAbstractGUI
         
         addToPanel(mainPanel, editConstraints, 1, ++y, COMPOSITE_KSERIALIZERS_LIST = new CompositeSerializerList());
         KSERIALIZER.addActionListener(COMPOSITE_KSERIALIZERS_LIST);
-
-        JLabel infoLabel = new JLabel("Use clientType <" + EnhancedAstyanaxConnection.class.getName() + "> in CassandraProperties panel if better results display is desired for Composite Types", JLabel.LEFT);
-        infoLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-        labelConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    	addToPanel(mainPanel, labelConstraints, 0, ++y, infoLabel);    	
-    	//reset to 1
-    	labelConstraints.gridwidth = 1;
 
         addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Column Serializer: ", JLabel.RIGHT));
         addToPanel(mainPanel, editConstraints, 1, y, CSERIALIZER = new JComboBox(EnhancedAbstractSampler.getSerializerNames().toArray()));

@@ -1,4 +1,4 @@
-package com.rim.icrs.cassjmeterext.gui;
+package com.netflix.jmeter.gui;
 
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
@@ -12,9 +12,8 @@ import javax.swing.JTextField;
 import org.apache.jmeter.samplers.gui.AbstractSamplerGui;
 import org.apache.jmeter.testelement.TestElement;
 
-import com.netflix.jmeter.gui.AbstractGUI;
 import com.netflix.jmeter.sampler.Connection;
-import com.rim.icrs.cassjmeterext.sampler.EnhancedAbstractSampler;
+import com.netflix.jmeter.sampler.EnhancedAbstractSampler;
 
 /**
  * Abstracted this so I could gain access to the private fields, to add a listener to the keyserializer jcomponent,

@@ -1,4 +1,4 @@
-package com.rim.icrs.cassjmeterext.gui.components;
+package com.netflix.jmeter.gui.components;
 
 import java.awt.BorderLayout;
 import java.awt.Toolkit;

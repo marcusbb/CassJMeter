@@ -9,6 +9,8 @@ import com.netflix.jmeter.sampler.AbstractSampler.ResponseData;
 public interface Operation
 {
     void serlizers(AbstractSerializer<?> kser, AbstractSerializer<?> colser, AbstractSerializer<?> valser);
+    
+    void compositeSerializers(AbstractSerializer<?>[] compositeKeySerializers, AbstractSerializer<?>[] compositeColumnSerializers, AbstractSerializer<?>[] compositeValueSerializers);
 
     ResponseData put(Object key, Object colName, Object value) throws OperationException;
 

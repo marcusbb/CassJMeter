@@ -2,6 +2,7 @@ package com.netflix.jmeter.connections.a6x;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -14,11 +15,18 @@ import com.netflix.astyanax.SerializerPackage;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.connectionpool.exceptions.NotFoundException;
+import com.netflix.astyanax.model.ByteBufferRange;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.Composite;
+import com.netflix.astyanax.model.Equality;
+import com.netflix.astyanax.model.AbstractComposite.Component;
 import com.netflix.astyanax.serializers.AbstractSerializer;
+import com.netflix.astyanax.serializers.ByteBufferOutputStream;
 import com.netflix.astyanax.serializers.ByteBufferSerializer;
+import com.netflix.astyanax.serializers.CompositeRangeBuilder;
+import com.netflix.astyanax.serializers.CompositeSerializer;
 import com.netflix.astyanax.serializers.LongSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
 import com.netflix.jmeter.sampler.AbstractSampler.ResponseData;
@@ -28,9 +36,17 @@ import com.netflix.jmeter.utils.SystemUtils;
 
 public class AstyanaxOperation implements Operation
 {
+    private static ByteBuffer EMPTY_BYTE_BUFFER = ByteBuffer.allocate(0);
+    
+	private AbstractSerializer keySerializer;
     private AbstractSerializer valueSerializer;
     private ColumnFamily<Object, Object> cfs;
     private AbstractSerializer columnSerializer;
+    
+    private AbstractSerializer<?>[] compositeKeySerializers;
+    private AbstractSerializer<?>[] compositeColumnSerializers;
+    private AbstractSerializer<?>[] compositeValueSerializers;
+
     private final String cfName;
     private final boolean isCounter;
 
@@ -66,6 +82,13 @@ public class AstyanaxOperation implements Operation
         this.valueSerializer = valueSerializer;
     }
 
+    @Override
+    public void compositeSerializers(AbstractSerializer<?>[] compositeKeySerializers, AbstractSerializer<?>[] compositeColumnSerializers, AbstractSerializer<?>[] compositeValueSerializers){
+    	this.compositeKeySerializers = compositeKeySerializers;
+    	this.compositeColumnSerializers = compositeColumnSerializers;
+    	this.compositeValueSerializers = compositeValueSerializers;
+    }
+    
     @Override
     public ResponseData put(Object key, Object colName, Object value) throws OperationException
     {
@@ -147,11 +170,13 @@ public class AstyanaxOperation implements Operation
         OperationResult<Column<Object>> opResult = null;
         try
         {
+        	
             opResult = AstyanaxConnection.instance.keyspace().prepareQuery(cfs).getKey(rkey).getColumn(colName).execute();
             bytes = opResult.getResult().getRawName().capacity();
             bytes += opResult.getResult().getByteBufferValue().capacity();
-            String value = SystemUtils.convertToString(valueSerializer, opResult.getResult().getByteBufferValue());
-            response.append(value);
+            
+            response.append(formatResult(opResult.getResult().getByteBufferValue(), valueSerializer, compositeValueSerializers));            
+           
         }
         catch (NotFoundException ex)
         {
@@ -204,18 +229,26 @@ public class AstyanaxOperation implements Operation
         StringBuffer response = new StringBuffer().append("\n");
         try
         {
-            RangeBuilder rb = new RangeBuilder().setStart(startColumn, columnSerializer).setEnd(endColumn, columnSerializer).setLimit(count).setReversed(reversed);
-            opResult = AstyanaxConnection.instance.keyspace().prepareQuery(cfs).getKey(rKey).withColumnRange(rb.build()).execute();
+        	
+        	ByteBufferRange range = buildRange(startColumn, endColumn, reversed, count);        	
+
+            opResult = AstyanaxConnection.instance.keyspace().prepareQuery(cfs).getKey(rKey).withColumnRange(range).execute();
             Iterator<?> it = opResult.getResult().iterator();
             while (it.hasNext())
             {
                 Column<?> col = (Column<?>) it.next();
-                String key = SystemUtils.convertToString(columnSerializer, col.getRawName());
+                                
                 bytes += col.getRawName().capacity();
-                String value = SystemUtils.convertToString(valueSerializer, col.getByteBufferValue());
                 bytes += col.getByteBufferValue().capacity();
-                response.append(key).append(":").append(value).append(SystemUtils.NEW_LINE);
+                
+                response.append("[")
+                		.append(formatResult(col.getRawName(), columnSerializer, compositeColumnSerializers))
+                		.append("]:[")
+                		.append(formatResult(col.getByteBufferValue(), valueSerializer, compositeValueSerializers))
+                		.append("]")
+                		.append(SystemUtils.NEW_LINE);
             }
+            
         }
         catch (NotFoundException ex)
         {
@@ -241,5 +274,97 @@ public class AstyanaxOperation implements Operation
         {
             throw new OperationException(e);
         }
+    }
+    
+    protected StringBuffer formatResult(ByteBuffer byteBuf, AbstractSerializer<?> serializer, AbstractSerializer<?>[] compositeSerializers){
+    	StringBuffer response = new StringBuffer();
+    	 
+    	if(serializer instanceof CompositeSerializer && compositeSerializers != null && compositeSerializers.length > 0){
+         	Composite composite = new Composite();
+         	composite.setSerializersByPosition(compositeSerializers);
+         	composite.deserialize(byteBuf);
+         	for(Component<?> component : composite.getComponents()){
+         		if(component.getValue() != null){
+         			response.append(component.getValue().toString());
+         		}
+         		response.append(":");
+         	}
+         	
+         	if(response.length()>0){
+         		response.setLength(response.length()-1);
+         	}
+         }else{
+             response.append(SystemUtils.convertToString(serializer, byteBuf));            	
+         }
+    	
+    	return response;
+    }
+    
+    
+    protected ByteBufferRange buildRange(Object startColumn, Object endColumn, boolean reversed, int count){
+    	ByteBufferRange range = null;
+    	
+    	if(columnSerializer instanceof CompositeSerializer && compositeColumnSerializers != null && compositeColumnSerializers.length > 0){
+    		range = buildCompositeRange((Composite)startColumn, (Composite)endColumn, reversed, count);
+    	}else{
+    		range = new RangeBuilder().setStart(startColumn, columnSerializer).setEnd(endColumn, columnSerializer).setLimit(count).setReversed(reversed).build();
+    	}
+    	
+    	return range;
+    }
+	protected ByteBufferRange buildCompositeRange(Composite startColumn, Composite endColumn, boolean reversed, int count){
+		List<Component<?>> startComponents = startColumn.getComponents();
+		
+		CompositeRangeBuilder rangeBuilder = buildRange(compositeColumnSerializers);
+		
+		for(int i = 0; i < startComponents.size(); i++){
+			Object value = startComponents.get(i).getValue();
+			if(i < (startComponents.size()-1)){
+				rangeBuilder.withPrefix(value);
+			}else{
+				Object endValue = endColumn.getComponents().get(i).getValue();
+				rangeBuilder.greaterThanEquals(value).lessThanEquals(endValue);
+			}
+			
+		}
+		
+		if(reversed){
+			rangeBuilder.reverse();
+		}
+		
+		return rangeBuilder.limit(count).build();
+	}
+	
+	public static CompositeRangeBuilder buildRange(final AbstractSerializer[] serializers) {
+    	
+        return new CompositeRangeBuilder() {        	
+            
+            private int position = 0;
+            
+            public void nextComponent() {
+                position++;
+            }
+
+            public void append(ByteBufferOutputStream out, Object value, Equality equality) {
+                AbstractSerializer serializer = serializers[position];
+                // First, serialize the ByteBuffer for this component
+                ByteBuffer cb;
+                try {
+                    cb = serializer.toByteBuffer(value);
+                }
+                catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (cb == null) {
+                    cb = EMPTY_BYTE_BUFFER;
+                }
+
+                // Write the data: <length><data><0>
+                out.writeShort((short) cb.remaining());
+                out.write(cb.slice());
+                out.write(equality.toByte());
+            }
+        };
     }
 }
