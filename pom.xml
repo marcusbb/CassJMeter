@@ -4,27 +4,33 @@
 	<groupId>com.netflix</groupId>
 	<artifactId>CassJMeter</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.2-SNAPSHOT</version>
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.jmeter</groupId>
 			<artifactId>ApacheJMeter_core</artifactId>
-			<version>2.6</version>
+			<version>2.9</version>
 		</dependency>
 		<dependency>
-			<groupId>me.prettyprint</groupId>
+			<groupId>org.hectorclient</groupId>
 			<artifactId>hector-core</artifactId>
-			<version>1.0-3</version>
+			<version>1.1-2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.netflix.servo</groupId>
 			<artifactId>servo-core</artifactId>
-			<version>0.1.0</version>
+			<version>0.4.32</version>
 		</dependency>
 		<dependency>
 			<groupId>com.netflix.astyanax</groupId>
 			<artifactId>astyanax</artifactId>
-			<version>1.0.4</version>
+			<version>1.56.25</version>
+		</dependency>
+		<!-- setting to the same version as astyanax as hector pulls in r09 -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>11.0.1</version>
 		</dependency>
 	</dependencies>
 	<build>
