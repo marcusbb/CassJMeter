@@ -19,6 +19,8 @@ public interface Operation
     ResponseData get(Object rkey, Object colName) throws OperationException;
 
     ResponseData rangeSlice(Object rKey, Object startColumn, Object endColumn, boolean reversed, int count) throws OperationException;
+    
+    ResponseData indexRangeSlice(Object indexName, Object indexValue, Object startColumn, Object endColumn, boolean reversed, int count) throws OperationException;
 
     ResponseData putComposite(String key, String colName, ByteBuffer vbb) throws OperationException;
 

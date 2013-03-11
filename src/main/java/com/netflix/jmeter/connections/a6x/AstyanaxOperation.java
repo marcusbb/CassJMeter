@@ -1,12 +1,14 @@
 package com.netflix.jmeter.connections.a6x;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.cassandra.utils.Pair;
+import org.mortbay.log.Log;
 
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ColumnMutation;
@@ -20,7 +22,10 @@ import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Composite;
+import com.netflix.astyanax.model.DynamicComposite;
 import com.netflix.astyanax.model.Equality;
+import com.netflix.astyanax.model.Row;
+import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.model.AbstractComposite.Component;
 import com.netflix.astyanax.serializers.AbstractSerializer;
 import com.netflix.astyanax.serializers.ByteBufferOutputStream;
@@ -78,6 +83,7 @@ public class AstyanaxOperation implements Operation
     public void serlizers(AbstractSerializer<?> keySerializer, AbstractSerializer<?> columnSerializer, AbstractSerializer<?> valueSerializer)
     {
         this.cfs = new ColumnFamily(cfName, keySerializer, columnSerializer);
+        this.keySerializer = keySerializer;
         this.columnSerializer = columnSerializer;
         this.valueSerializer = valueSerializer;
     }
@@ -262,7 +268,67 @@ public class AstyanaxOperation implements Operation
         return new AstyanaxResponseData(response.toString(), bytes, opResult, rKey, Pair.create(startColumn, endColumn), null);
     }
 
+    
     @Override
+	public ResponseData indexRangeSlice(Object indexName,
+			Object indexValue, Object startColumn, Object endColumn,
+			boolean reversed, int count) throws OperationException {
+        int bytes = 0;
+        OperationResult<Rows<Object, Object>> opResult = null;
+        StringBuffer response = new StringBuffer().append("\n");
+        try
+        {
+        	
+        	ByteBufferRange range = buildRange(startColumn, endColumn, reversed, count);        	
+
+            opResult = AstyanaxConnection.instance.keyspace().prepareQuery(cfs).searchWithIndex().addExpression().whereColumn(indexName).equals().value(indexValue.toString()).withColumnRange(range).execute();
+            
+            Iterator<?> rowsIter = opResult.getResult().iterator();
+            while(rowsIter.hasNext()){
+            	
+            	Row<?, ?> row = (Row<?, ?>)rowsIter.next();
+            	
+            	Log.info("Row key: " + row.getRawKey());
+            	response.append("Row: [")
+            	.append(formatResult(row.getRawKey(), keySerializer, compositeKeySerializers))
+            	.append("]")
+            	.append(SystemUtils.NEW_LINE);   
+            	
+            	Iterator<?> columnIter = row.getColumns().iterator();
+            	 while (columnIter.hasNext())
+                 {
+                     Column<?> col = (Column<?>) columnIter.next();
+                                     
+                     bytes += col.getRawName().capacity();
+                     bytes += col.getByteBufferValue().capacity();
+                     
+                     response.append("\t[")
+                     		.append(formatResult(col.getRawName(), columnSerializer, compositeColumnSerializers))
+                     		.append("]:[")
+                     		.append(formatResult(col.getByteBufferValue(), valueSerializer, compositeValueSerializers))
+                     		.append("]")
+                     		.append(SystemUtils.NEW_LINE);
+                 }
+            }
+                                    
+        }
+        catch (NotFoundException ex)
+        {
+            // ignore this because nothing is available to show
+            response.append("...Not found...");
+        }
+        catch (ConnectionException e)
+        {
+            throw new OperationException(e);
+        }
+                
+        Map<Object, Object> queryParams = new HashMap<Object, Object>();
+        queryParams.put(indexName, indexValue);
+        queryParams.put(Pair.create(startColumn, endColumn), null);
+        return new AstyanaxResponseData(response.toString(), bytes, opResult, "", queryParams);
+	}
+
+	@Override
     public ResponseData delete(Object rkey, Object colName) throws OperationException
     {
         try

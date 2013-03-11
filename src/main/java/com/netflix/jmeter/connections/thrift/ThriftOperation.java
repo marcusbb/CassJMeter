@@ -175,7 +175,16 @@ public class ThriftOperation implements Operation
         return new ResponseData(response.toString(), bytes, client.host, 0, rKey, Pair.create(startColumn, endColumn), null);
     }
 
+    
     @Override
+	public ResponseData indexRangeSlice(Object indexName,
+			Object indexValue, Object startColumn, Object endColumn,
+			boolean reversed, int count) throws OperationException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
     public ResponseData putComposite(String key, String colName, ByteBuffer vbb) throws OperationException
     {
         // TODO Auto-generated method stub
