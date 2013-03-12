@@ -17,7 +17,11 @@ import com.netflix.jmeter.sampler.EnhancedPutSampler;
 public class EnhancedPut extends EnhancedAbstractGUI
 {    
  	private static final long serialVersionUID = -2385526600604989215L;
-	private static final String LABEL = "Cassandra Enhanced Put";    
+	private static final String LABEL = "Cassandra Enhanced Put";
+	
+    protected JTextField KEY;
+    protected JTextField COLUMN_FAMILY;
+
 	private JTextField CNAME;
     private JTextField VALUE;
     private JComboBox KSERIALIZER;
@@ -33,6 +37,10 @@ public class EnhancedPut extends EnhancedAbstractGUI
     public void configure(TestElement element)
     {
         super.configure(element);
+
+        KEY.setText(element.getPropertyAsString(EnhancedAbstractSampler.KEY));        
+        COLUMN_FAMILY.setText(element.getPropertyAsString(EnhancedAbstractSampler.COLUMN_FAMILY));
+        
         CNAME.setText(element.getPropertyAsString(EnhancedPutSampler.COLUMN_NAME));
         VALUE.setText(element.getPropertyAsString(EnhancedPutSampler.VALUE));
         KSERIALIZER.setSelectedItem(element.getPropertyAsString(EnhancedPutSampler.KEY_SERIALIZER_TYPE));
@@ -63,6 +71,10 @@ public class EnhancedPut extends EnhancedAbstractGUI
         	gSampler.setKSerializerType((String) KSERIALIZER.getSelectedItem());
             gSampler.setCSerializerType((String) CSERIALIZER.getSelectedItem());
             gSampler.setVSerializerType((String) VSERIALIZER.getSelectedItem());
+            
+            gSampler.setKey(KEY.getText());
+            gSampler.setColumnFamily(COLUMN_FAMILY.getText());
+
             gSampler.setColumnName(CNAME.getText());
             gSampler.setValue(VALUE.getText());
             gSampler.setCounter(IS_COUNTER.isSelected());
@@ -83,6 +95,9 @@ public class EnhancedPut extends EnhancedAbstractGUI
 
     public void initFields()
     {     	
+    	KEY.setText("${__Random(1,1000)}");        
+        COLUMN_FAMILY.setText("Standard3");
+    	
         CNAME.setText("${__Random(1,1000)}");
         VALUE.setText("${__Random(1,1000)}");
         KSERIALIZER.setSelectedItem("Key Serializer");
@@ -93,8 +108,15 @@ public class EnhancedPut extends EnhancedAbstractGUI
     @Override
     public void init(JPanel mainPanel, GridBagConstraints labelConstraints, GridBagConstraints editConstraints)
     {
-    	int y = 3;
-        addToPanel(mainPanel, labelConstraints, 0, y, new JLabel("Column Name: ", JLabel.RIGHT));
+    	int y = 0;
+    	
+    	addToPanel(mainPanel, labelConstraints, 0, y, new JLabel("Column Family: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, COLUMN_FAMILY = new JTextField());
+        
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Row Key: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, KEY = new JTextField());
+         
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Column Name: ", JLabel.RIGHT));
         addToPanel(mainPanel, editConstraints, 1, y, CNAME = new JTextField());
         
         addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Column Value: ", JLabel.RIGHT));

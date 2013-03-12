@@ -8,21 +8,25 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.cassandra.utils.Pair;
-import org.mortbay.log.Log;
 
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ColumnMutation;
+import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.SerializerPackage;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.connectionpool.exceptions.NotFoundException;
+import com.netflix.astyanax.index.HCIndexQueryImpl;
+import com.netflix.astyanax.index.HCMutationBatchImpl;
+import com.netflix.astyanax.index.IndexCoordination;
+import com.netflix.astyanax.index.IndexCoordinationFactory;
+import com.netflix.astyanax.index.IndexMetadata;
 import com.netflix.astyanax.model.ByteBufferRange;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Composite;
-import com.netflix.astyanax.model.DynamicComposite;
 import com.netflix.astyanax.model.Equality;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
@@ -52,8 +56,10 @@ public class AstyanaxOperation implements Operation
     private AbstractSerializer<?>[] compositeColumnSerializers;
     private AbstractSerializer<?>[] compositeValueSerializers;
 
-    private final String cfName;
-    private final boolean isCounter;
+    private final String cfName;    
+    private final boolean isCounter;   
+    private boolean hcIndexed = false;
+    private IndexCoordination indexCoordinator = IndexCoordinationFactory.getIndexContext(); 
 
     public class AstyanaxResponseData extends ResponseData
     {
@@ -71,14 +77,25 @@ public class AstyanaxOperation implements Operation
         {
             super(response, size, (result == null) ? "" : result.getHost().getHostName(), result != null ? result.getLatency(TimeUnit.MILLISECONDS) : 0, key, kv);
         }
-    }
+    }    
     
     AstyanaxOperation(String columnName, boolean isCounter)
-    {
-        this.cfName = columnName;
+    {    
+        this.cfName = columnName;    
         this.isCounter = isCounter;
+    }    
+    
+    AstyanaxOperation(String cfName, List<IndexMetadata<?,?>> hcIndexedColumns, boolean isCounter)
+    {
+    	this(cfName, isCounter);  
+    	if(hcIndexedColumns != null && !hcIndexedColumns.isEmpty()){
+    		hcIndexed = true;
+        	for(IndexMetadata<?,?> metaData : hcIndexedColumns){
+        		this.indexCoordinator.addIndexMetaData(metaData);
+        	}        
+    	}
     }
-
+    
     @Override
     public void serlizers(AbstractSerializer<?> keySerializer, AbstractSerializer<?> columnSerializer, AbstractSerializer<?> valueSerializer)
     {
@@ -148,7 +165,12 @@ public class AstyanaxOperation implements Operation
     @Override
     public ResponseData batchMutate(Object key, Map<?, ?> nv) throws OperationException
     {
+    	if(hcIndexed){
+    		return hcBatchMutate(key, nv);
+    	}
+    	
         MutationBatch m = AstyanaxConnection.instance.keyspace().prepareMutationBatch();
+        
         ColumnListMutation<Object> cf = m.withRow(cfs, key);
         for (Map.Entry<?, ?> entry : nv.entrySet())
         {
@@ -167,8 +189,37 @@ public class AstyanaxOperation implements Operation
             throw new OperationException(e);
         }
     }
+        
+	public ResponseData hcBatchMutate(Object key, Map<?, ?> nv) throws OperationException {
+		    	 
+    	 Keyspace keyspace = AstyanaxConnection.instance.keyspace();
+    	 MutationBatch m = keyspace.prepareMutationBatch();
+    	 
+    	 HCMutationBatchImpl indexedBatch = new HCMutationBatchImpl(this.indexCoordinator);     	 
+    	         	 
+    	 ColumnListMutation<Object> mutation = indexedBatch.withIndexedRow(m, cfs, key);
+             	 
+         for (Map.Entry<?, ?> entry : nv.entrySet())
+         {
+             if (isCounter)
+            	 mutation.incrementCounterColumn(entry.getKey(), (Long) entry.getValue());
+             else{
+            	 mutation.putColumn(entry.getKey(), entry.getValue(), valueSerializer, null);
+                
+             }
+         }
+         try
+         {
+             OperationResult<Void> result = m.execute();
+             return new AstyanaxResponseData("", 0, result, key, nv);
+         }
+         catch (ConnectionException e)
+         {
+             throw new OperationException(e);
+         }
+	}
 
-    @Override
+	@Override
     public ResponseData get(Object rkey, Object colName) throws OperationException
     {
         StringBuffer response = new StringBuffer();
@@ -270,25 +321,29 @@ public class AstyanaxOperation implements Operation
 
     
     @Override
-	public ResponseData indexRangeSlice(Object indexName,
-			Object indexValue, Object startColumn, Object endColumn,
+	public ResponseData indexRangeSlice(Map<?, ?> nv, Object startColumn, Object endColumn,
 			boolean reversed, int count) throws OperationException {
+    	
+    	if(hcIndexed){
+    		return hcIndexRangeSlice(nv, startColumn, endColumn, reversed, count);
+    	}
+    	
         int bytes = 0;
         OperationResult<Rows<Object, Object>> opResult = null;
         StringBuffer response = new StringBuffer().append("\n");
+        Map.Entry<?, ?> indexPair = nv.entrySet().iterator().next();
         try
         {
         	
         	ByteBufferRange range = buildRange(startColumn, endColumn, reversed, count);        	
 
-            opResult = AstyanaxConnection.instance.keyspace().prepareQuery(cfs).searchWithIndex().addExpression().whereColumn(indexName).equals().value(indexValue.toString()).withColumnRange(range).execute();
+            opResult = AstyanaxConnection.instance.keyspace().prepareQuery(cfs).searchWithIndex().addExpression().whereColumn(indexPair.getKey()).equals().value(indexPair.getValue().toString()).withColumnRange(range).execute();
             
             Iterator<?> rowsIter = opResult.getResult().iterator();
             while(rowsIter.hasNext()){
             	
             	Row<?, ?> row = (Row<?, ?>)rowsIter.next();
             	
-            	Log.info("Row key: " + row.getRawKey());
             	response.append("Row: [")
             	.append(formatResult(row.getRawKey(), keySerializer, compositeKeySerializers))
             	.append("]")
@@ -323,12 +378,73 @@ public class AstyanaxOperation implements Operation
         }
                 
         Map<Object, Object> queryParams = new HashMap<Object, Object>();
-        queryParams.put(indexName, indexValue);
+        queryParams.put(indexPair.getKey(), indexPair.getValue());
         queryParams.put(Pair.create(startColumn, endColumn), null);
         return new AstyanaxResponseData(response.toString(), bytes, opResult, "", queryParams);
 	}
 
-	@Override
+    //TODO: right now this just supports querying by one index at a time. In future allow building query with multiple indexes possible.    
+	public ResponseData hcIndexRangeSlice(Map<?, ?> nv, Object startColumn, Object endColumn,
+			boolean reversed, int count) throws OperationException {    	
+    	
+    	int bytes = 0;
+                
+        OperationResult<Rows<Object, Object>> opResult = null;
+        StringBuffer response = new StringBuffer().append("\n");
+        Map.Entry<?, ?> indexPair = nv.entrySet().iterator().next();
+        try
+        {        	
+        	ByteBufferRange range = buildRange(startColumn, endColumn, reversed, count);        	
+
+        	Keyspace keyspace = AstyanaxConnection.instance.keyspace();
+        	HCIndexQueryImpl<Object, Object, Object> hcq = new HCIndexQueryImpl<Object, Object, Object>(keyspace, cfs);         	 	
+            opResult = hcq.equals(indexPair.getKey(), indexPair.getValue()).withColumnRange(range).execute();
+            
+            Iterator<?> rowsIter = opResult.getResult().iterator();
+            while(rowsIter.hasNext()){
+            	
+            	Row<?, ?> row = (Row<?, ?>)rowsIter.next();
+            	response.append("Row: [")
+            	.append(row.getKey())
+            	.append("]")
+            	.append(SystemUtils.NEW_LINE);   
+            	
+            	Iterator<?> columnIter = row.getColumns().iterator();
+            	 while (columnIter.hasNext())
+                 {
+                     Column<?> col = (Column<?>) columnIter.next();
+                                     
+                     bytes += col.getRawName().capacity();
+                     bytes += col.getByteBufferValue().capacity();
+                     
+                     response.append("\t[")
+                     		.append(formatResult(col.getRawName(), columnSerializer, compositeColumnSerializers))
+                     		.append("]:[")
+                     		.append(formatResult(col.getByteBufferValue(), valueSerializer, compositeValueSerializers))
+                     		.append("]")
+                     		.append(SystemUtils.NEW_LINE);
+                 }
+            }
+                                    
+        }
+        catch (NotFoundException ex)
+        {
+            // ignore this because nothing is available to show
+            response.append("...Not found...");
+        }
+        catch (ConnectionException e)
+        {
+            throw new OperationException(e);
+        }
+                
+        Map<Object, Object> queryParams = new HashMap<Object, Object>();
+        queryParams.put(indexPair.getKey(), indexPair.getValue());
+        queryParams.put(Pair.create(startColumn, endColumn), null);
+        return new AstyanaxResponseData(response.toString(), bytes, opResult, "", queryParams);
+	}
+
+
+    @Override
     public ResponseData delete(Object rkey, Object colName) throws OperationException
     {
         try

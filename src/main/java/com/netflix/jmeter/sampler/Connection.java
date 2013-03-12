@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Sets;
+import com.netflix.astyanax.index.IndexMetadata;
 import com.netflix.jmeter.properties.Properties;
 import com.netflix.jmeter.utils.CClient;
 import com.netflix.jmeter.utils.Schema;
@@ -166,6 +167,15 @@ public abstract class Connection
     }
 
     public abstract Operation newOperation(String columnName, boolean isCounter);
+    
+    /**
+     * 
+     * @param cfName - column family name
+     * @param hcIndexedColumns - if the cfName uses high cardinality indexes, specify the index columns metadata
+     * @param isCounter
+     * @return
+     */
+    public abstract Operation newOperation(String cfName, List<IndexMetadata<?,?>> hcIndexedColumns, boolean isCounter);
     
     public abstract String logConnections();
 

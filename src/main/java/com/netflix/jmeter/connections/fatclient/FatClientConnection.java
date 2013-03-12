@@ -2,12 +2,14 @@ package com.netflix.jmeter.connections.fatclient;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.cassandra.service.StorageService;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.netflix.astyanax.index.IndexMetadata;
 import com.netflix.jmeter.properties.Properties;
 import com.netflix.jmeter.sampler.Connection;
 import com.netflix.jmeter.sampler.Operation;
@@ -86,6 +88,13 @@ public class FatClientConnection extends Connection
                 isCounter);
     }
 
+    @Override
+    public Operation newOperation(String cfName, List<IndexMetadata<?,?>> hcIndexedColumns, boolean isCounter)
+    {
+    	//hc Index not implemented here.
+    	return newOperation(cfName, isCounter);
+    }
+    
     @Override
     public String logConnections()
     {

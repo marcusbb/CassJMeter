@@ -6,12 +6,15 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
 
 import org.apache.jmeter.testelement.TestElement;
 
 import com.netflix.jmeter.gui.components.CompositeSerializerList;
 import com.netflix.jmeter.sampler.EnhancedAbstractSampler;
+import com.netflix.jmeter.sampler.EnhancedGetHCIndexRangeSliceSampler;
 import com.netflix.jmeter.sampler.EnhancedGetRangeSliceSampler;
 import com.netflix.jmeter.sampler.EnhancedGetIndexRangeSliceSampler;
 
@@ -19,10 +22,12 @@ import com.netflix.jmeter.sampler.EnhancedGetIndexRangeSliceSampler;
 public class EnhancedGetIndexRangeSlice extends EnhancedAbstractGUI
 {	
     private static final long serialVersionUID = 3197090412869386190L;
-    private static final String LABEL = "Cassandra Get Index Range Slice";
+    private static final String LABEL = "Cassandra Enhanced Get Index Range Slice";
 
-    private JTextField INDEX_COLUMN_NAME;
-    private JTextField INDEX_COLUMN_VALUE;
+    protected JTextField COLUMN_FAMILY;
+
+    private JTextArea INDEX_NAME_VALUE_SEPARATOR;
+    private JTextArea INDEX_NAME_AND_VALUE;
     
 	private JTextField START_COLUMN_NAME;
     private JTextField END_COLUMN_NAME;
@@ -42,10 +47,12 @@ public class EnhancedGetIndexRangeSlice extends EnhancedAbstractGUI
     public void configure(TestElement element)
     {
         super.configure(element);
-        
-        INDEX_COLUMN_NAME.setText(element.getPropertyAsString(EnhancedGetIndexRangeSliceSampler.INDEX_COLUMN_NAME));
-        INDEX_COLUMN_VALUE.setText(element.getPropertyAsString(EnhancedGetIndexRangeSliceSampler.INDEX_COLUMN_VALUE));
-        
+
+        COLUMN_FAMILY.setText(element.getPropertyAsString(EnhancedAbstractSampler.COLUMN_FAMILY));
+
+        INDEX_NAME_AND_VALUE.setText(element.getPropertyAsString(EnhancedGetHCIndexRangeSliceSampler.INDEX_NAME_AND_VALUE));
+        INDEX_NAME_VALUE_SEPARATOR.setText(element.getPropertyAsString(EnhancedGetHCIndexRangeSliceSampler.INDEX_NAME_VALUE_SEPARATOR));
+
         START_COLUMN_NAME.setText(element.getPropertyAsString(EnhancedGetIndexRangeSliceSampler.START_COLUMN_NAME));
         END_COLUMN_NAME.setText(element.getPropertyAsString(EnhancedGetIndexRangeSliceSampler.END_COLUMN_NAME));
         COUNT.setText(element.getPropertyAsString(EnhancedGetIndexRangeSliceSampler.COUNT));
@@ -75,12 +82,15 @@ public class EnhancedGetIndexRangeSlice extends EnhancedAbstractGUI
         if (sampler instanceof EnhancedGetIndexRangeSliceSampler)
         {
         	EnhancedGetIndexRangeSliceSampler gSampler = (EnhancedGetIndexRangeSliceSampler) sampler;
+        	
         	gSampler.setKSerializerType((String) KSERIALIZER.getSelectedItem());
             gSampler.setCSerializerType((String) CSERIALIZER.getSelectedItem());
             gSampler.setVSerializerType((String) VSERIALIZER.getSelectedItem());
 
-            gSampler.setIndexName(INDEX_COLUMN_NAME.getText());
-            gSampler.setIndexValue(INDEX_COLUMN_VALUE.getText());
+            gSampler.setColumnFamily(COLUMN_FAMILY.getText());
+
+            gSampler.setIndexNameValue(INDEX_NAME_AND_VALUE.getText());
+            gSampler.setIndexNameValueSeparator(INDEX_NAME_VALUE_SEPARATOR.getText());
 
             gSampler.setStartName(START_COLUMN_NAME.getText());
             gSampler.setEndName(END_COLUMN_NAME.getText());
@@ -103,9 +113,13 @@ public class EnhancedGetIndexRangeSlice extends EnhancedAbstractGUI
     }
 
     public void initFields()
-    {     	
-    	INDEX_COLUMN_NAME.setText("${__Random(1,1000)}");
-    	INDEX_COLUMN_VALUE.setText("${__Random(1,1000)}");
+    {     	        
+        COLUMN_FAMILY.setText("Standard3");
+    	
+    	String defaultSeparator = "@@";
+    	INDEX_NAME_VALUE_SEPARATOR.setText(defaultSeparator);
+        INDEX_NAME_AND_VALUE.setText("${__Random(1,1000)}:${__Random(1,1000)}".concat(defaultSeparator).concat("${__Random(1,1000)}:${__Random(1,1000)}\n")
+        						.concat("${__Random(1,1000)}:${__Random(1,1000)}").concat(defaultSeparator).concat("${__Random(1,1000)}:${__Random(1,1000)}"));
 
     	START_COLUMN_NAME.setText("${__Random(1,1000)}");
         END_COLUMN_NAME.setText("${__Random(1,1000)}");
@@ -121,14 +135,20 @@ public class EnhancedGetIndexRangeSlice extends EnhancedAbstractGUI
     public void init(JPanel mainPanel, GridBagConstraints labelConstraints, GridBagConstraints editConstraints)
     {
     	
-    	int y = 3;
-
-        addToPanel(mainPanel, labelConstraints, 0, y, new JLabel("Index Column Name: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, y, INDEX_COLUMN_NAME = new JTextField());
-
-    	addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Index Column Value: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, y, INDEX_COLUMN_VALUE = new JTextField());
-
+    	int y = 0;
+    	
+    	addToPanel(mainPanel, labelConstraints, 0, y, new JLabel("Column Family: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, COLUMN_FAMILY = new JTextField());
+        
+    	addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Index Column Value Separator: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, INDEX_NAME_VALUE_SEPARATOR = new JTextArea());
+        INDEX_NAME_VALUE_SEPARATOR.setBorder(new BevelBorder(BevelBorder.LOWERED));
+        
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Index Column K/V(eg: Name@@Value): ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, INDEX_NAME_AND_VALUE = new JTextArea());
+        INDEX_NAME_AND_VALUE.setRows(10);
+        INDEX_NAME_AND_VALUE.setBorder(new BevelBorder(BevelBorder.LOWERED));
+        
         addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Start Column Name: ", JLabel.RIGHT));
         addToPanel(mainPanel, editConstraints, 1, y, START_COLUMN_NAME = new JTextField());
         

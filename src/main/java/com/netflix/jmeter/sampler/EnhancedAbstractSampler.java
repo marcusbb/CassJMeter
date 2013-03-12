@@ -1,10 +1,31 @@
 package com.netflix.jmeter.sampler;
 
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.util.Date;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+import org.apache.cassandra.db.marshal.AsciiType;
+
+import com.google.common.collect.Maps;
 import com.netflix.astyanax.model.Composite;
 import com.netflix.astyanax.serializers.AbstractSerializer;
+import com.netflix.astyanax.serializers.AsciiSerializer;
+import com.netflix.astyanax.serializers.BigIntegerSerializer;
+import com.netflix.astyanax.serializers.BooleanSerializer;
+import com.netflix.astyanax.serializers.BytesArraySerializer;
+import com.netflix.astyanax.serializers.CharSerializer;
 import com.netflix.astyanax.serializers.CompositeSerializer;
+import com.netflix.astyanax.serializers.DateSerializer;
+import com.netflix.astyanax.serializers.DoubleSerializer;
+import com.netflix.astyanax.serializers.FloatSerializer;
+import com.netflix.astyanax.serializers.IntegerSerializer;
+import com.netflix.astyanax.serializers.LongSerializer;
+import com.netflix.astyanax.serializers.ShortSerializer;
+import com.netflix.astyanax.serializers.StringSerializer;
+import com.netflix.astyanax.serializers.UUIDSerializer;
 
 public abstract class EnhancedAbstractSampler extends AbstractSampler{
 	
@@ -19,6 +40,26 @@ public abstract class EnhancedAbstractSampler extends AbstractSampler{
 		AbstractSampler.serializers.put("CompositeSerializer", CompositeSerializer.get());
 	}
 
+	@SuppressWarnings("rawtypes")
+	public static Map<String, Class> serializerToClassMap = Maps.newHashMap();
+    static
+    {
+    	serializerToClassMap.put("StringSerializer", String.class);
+    	serializerToClassMap.put("IntegerSerializer", Integer.class);
+    	serializerToClassMap.put("LongSerializer", Long.class);
+    	serializerToClassMap.put("BooleanSerializer", Boolean.class);
+    	serializerToClassMap.put("DoubleSerializer", Double.class);
+    	serializerToClassMap.put("DateSerializer", Date.class);
+    	serializerToClassMap.put("FloatSerializer", Float.class);
+    	serializerToClassMap.put("ShortSerializer", Short.class);
+    	serializerToClassMap.put("UUIDSerializer", UUID.class);
+    	serializerToClassMap.put("BigIntegerSerializer", BigInteger.class);
+    	serializerToClassMap.put("CharSerializer", Character.class);
+    	serializerToClassMap.put("AsciiSerializer", String.class);
+    	serializerToClassMap.put("BytesArraySerializer", byte[].class);
+    	serializerToClassMap.put("CompositeSerializer", Composite.class);
+    }
+    
 	public String[] getCompositeKSerializerTypes()
     {
         return getAsArray(getProperty(COMPOSITE_KEY_SERIALIZER_TYPES).getStringValue(), ",");

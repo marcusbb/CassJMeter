@@ -16,7 +16,11 @@ import com.netflix.jmeter.sampler.EnhancedGetSampler;
 public class EnhancedGet extends EnhancedAbstractGUI
 {    
  	private static final long serialVersionUID = -2385526600604989215L;
-	private static final String LABEL = "Cassandra Enhanced Get";    
+	private static final String LABEL = "Cassandra Enhanced Get";
+	
+    protected JTextField KEY;
+    protected JTextField COLUMN_FAMILY;
+
 	private JTextField CNAME;
     private JComboBox KSERIALIZER;
     private JComboBox CSERIALIZER;
@@ -30,6 +34,10 @@ public class EnhancedGet extends EnhancedAbstractGUI
     public void configure(TestElement element)
     {
         super.configure(element);
+
+        KEY.setText(element.getPropertyAsString(EnhancedAbstractSampler.KEY));        
+        COLUMN_FAMILY.setText(element.getPropertyAsString(EnhancedAbstractSampler.COLUMN_FAMILY));
+        
         CNAME.setText(element.getPropertyAsString(EnhancedGetSampler.COLUMN_NAME));
         KSERIALIZER.setSelectedItem(element.getPropertyAsString(EnhancedGetSampler.KEY_SERIALIZER_TYPE));
         CSERIALIZER.setSelectedItem(element.getPropertyAsString(EnhancedGetSampler.COLUMN_SERIALIZER_TYPE));
@@ -58,6 +66,9 @@ public class EnhancedGet extends EnhancedAbstractGUI
         	gSampler.setKSerializerType((String) KSERIALIZER.getSelectedItem());
             gSampler.setCSerializerType((String) CSERIALIZER.getSelectedItem());
             gSampler.setVSerializerType((String) VSERIALIZER.getSelectedItem());
+            
+            gSampler.setKey(KEY.getText());
+            gSampler.setColumnFamily(COLUMN_FAMILY.getText());
             gSampler.setColumnName(CNAME.getText());            
                    
             if("CompositeSerializer".equals(gSampler.getKSerializerType())){
@@ -76,6 +87,9 @@ public class EnhancedGet extends EnhancedAbstractGUI
 
     public void initFields()
     {     	
+    	KEY.setText("${__Random(1,1000)}");        
+        COLUMN_FAMILY.setText("Standard3");
+    	
         CNAME.setText("${__Random(1,1000)}");
         KSERIALIZER.setSelectedItem("Key Serializer");
         CSERIALIZER.setSelectedItem("Column Serializer");
@@ -85,8 +99,15 @@ public class EnhancedGet extends EnhancedAbstractGUI
     @Override
     public void init(JPanel mainPanel, GridBagConstraints labelConstraints, GridBagConstraints editConstraints)
     {
-    	int y = 3;
-        addToPanel(mainPanel, labelConstraints, 0, y, new JLabel("Column Name: ", JLabel.RIGHT));
+    	int y = 0;
+    	
+    	addToPanel(mainPanel, labelConstraints, 0, y, new JLabel("Column Family: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, COLUMN_FAMILY = new JTextField());
+        
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Row Key: ", JLabel.RIGHT));
+        addToPanel(mainPanel, editConstraints, 1, y, KEY = new JTextField());
+         
+        addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Column Name: ", JLabel.RIGHT));
         addToPanel(mainPanel, editConstraints, 1, y, CNAME = new JTextField());
         
         addToPanel(mainPanel, labelConstraints, 0, ++y, new JLabel("Key Serializer: ", JLabel.RIGHT));

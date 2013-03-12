@@ -1,17 +1,21 @@
 package com.netflix.jmeter.sampler;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.google.common.collect.Maps;
+import com.netflix.astyanax.index.IndexMetadata;
 
-public class EnhancedGetIndexRangeSliceSampler extends EnhancedAbstractSampler
-{
-    private static final long serialVersionUID = -8566773644299382213L;
-    
+public class EnhancedGetHCIndexRangeSliceSampler extends EnhancedAbstractSampler
+{    
+	private static final long serialVersionUID = -3385053564788259243L;
+	public static final String INDEX_COLUMN_FAMILY = "INDEX_COLUMN_FAMILY";
+
     public static final String INDEX_NAME_AND_VALUE = "INDEX_NAME_AND_VALUE";
     public static final String INDEX_NAME_VALUE_SEPARATOR = "INDEX_NAME_VALUE_SEPARATOR";
-    
+
     public static final String START_COLUMN_NAME = "START_COLUMN_NAME";
     public static final String END_COLUMN_NAME = "END_COLUMN_NAME";
     public static final String IS_REVERSE = "IS_REVERSE";
@@ -19,11 +23,16 @@ public class EnhancedGetIndexRangeSliceSampler extends EnhancedAbstractSampler
 
     public ResponseData execute() throws OperationException
     {
-        Operation ops = Connection.getInstance().newOperation(getColumnFamily(), false);
+        Operation ops = Connection.getInstance().newOperation(getColumnFamily(), getIndexedColumnsMetadata(), false);
         setSerializers(ops);
         return ops.indexRangeSlice(getIndexNameValue(), getStartName(), getEndName(), isReverse(), getCount());
     }
 
+    public void setIndexColumnFamily(String text)
+    {
+    	setProperty(INDEX_COLUMN_FAMILY, text);
+    }
+       
     public void setIndexNameValue(String nameValueSeparator){
     	setProperty(INDEX_NAME_AND_VALUE, nameValueSeparator);
     }       
@@ -42,6 +51,11 @@ public class EnhancedGetIndexRangeSliceSampler extends EnhancedAbstractSampler
         setProperty(END_COLUMN_NAME, text);
     }
 
+    public String getIndexColumnFamily()
+    {
+        return getProperty(INDEX_COLUMN_FAMILY).getStringValue();
+    }
+    
     public String getIndexNameValueSeparator(){
     	return getProperty(INDEX_NAME_VALUE_SEPARATOR).getStringValue();
     }    
@@ -60,6 +74,23 @@ public class EnhancedGetIndexRangeSliceSampler extends EnhancedAbstractSampler
         return return_;
     }
        
+    public List<IndexMetadata<?,?>> getIndexedColumnsMetadata()
+    {        
+    	List<IndexMetadata<?,?>> return_ = com.google.common.collect.Lists.newArrayList();
+    	
+    	Iterator<?> iter = getIndexNameValue().keySet().iterator();
+    	
+    	while(iter.hasNext()){
+    		@SuppressWarnings({ "unchecked", "rawtypes" })
+    		IndexMetadata indexMetaData = new IndexMetadata(getColumnFamily(), 
+    				iter.next(), 
+        			serializerToClassMap.get(getKSerializerType()),
+        			getIndexColumnFamily());
+            return_.add(indexMetaData);
+    	}        
+        return return_;
+    }        
+        
     public Object getStartName()
     {
         String text = getProperty(START_COLUMN_NAME).getStringValue();

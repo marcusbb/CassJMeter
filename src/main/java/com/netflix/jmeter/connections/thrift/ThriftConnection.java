@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 
 import com.google.common.collect.Lists;
+import com.netflix.astyanax.index.IndexMetadata;
 import com.netflix.jmeter.properties.Properties;
 import com.netflix.jmeter.sampler.Connection;
 import com.netflix.jmeter.sampler.Operation;
@@ -44,6 +45,13 @@ public class ThriftConnection extends Connection
                 iscounter);
     }
 
+    @Override
+    public Operation newOperation(String cfName, List<IndexMetadata<?,?>> hcIndexedColumns, boolean isCounter)
+    {
+    	//hc Index not implemented here.
+    	return newOperation(cfName, isCounter);
+    }
+    
     @Override
     public String logConnections()
     {

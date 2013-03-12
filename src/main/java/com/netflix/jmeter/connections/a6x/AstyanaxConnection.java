@@ -2,6 +2,7 @@ package com.netflix.jmeter.connections.a6x;
 
 import java.io.File;
 import java.io.FileReader;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
@@ -18,6 +19,7 @@ import com.netflix.astyanax.connectionpool.impl.ConnectionPoolConfigurationImpl;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolType;
 import com.netflix.astyanax.connectionpool.impl.CountingConnectionPoolMonitor;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
+import com.netflix.astyanax.index.IndexMetadata;
 import com.netflix.astyanax.model.ConsistencyLevel;
 import com.netflix.astyanax.shallows.EmptyLatencyScoreStrategyImpl;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
@@ -106,6 +108,11 @@ public class AstyanaxConnection extends Connection
     public Operation newOperation(String columnName, boolean isCounter)
     {
         return new AstyanaxOperation(columnName, isCounter);
+    }
+
+    public Operation newOperation(String cfName, List<IndexMetadata<?,?>> hcIndexedColumns, boolean isCounter)
+    {
+        return new AstyanaxOperation(cfName, hcIndexedColumns, isCounter);
     }
 
     @Override

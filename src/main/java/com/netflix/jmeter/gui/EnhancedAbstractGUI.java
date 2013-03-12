@@ -26,8 +26,6 @@ public abstract class EnhancedAbstractGUI extends AbstractSamplerGui
 {
     private static final long serialVersionUID = -1372154378991423872L;
     private static final String WIKI = "https://github.com/Netflix/CassJMeter";
-    protected JTextField KEY;
-    protected JTextField COLUMN_FAMILY;
 
     public EnhancedAbstractGUI()
     {
@@ -43,10 +41,6 @@ public abstract class EnhancedAbstractGUI extends AbstractSamplerGui
         editConstraints.weightx = 1.0;
         editConstraints.fill = GridBagConstraints.HORIZONTAL;
         
-        addToPanel(mainPanel, labelConstraints, 0, 1, new JLabel("Column Family: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 1, COLUMN_FAMILY = new JTextField());
-        addToPanel(mainPanel, labelConstraints, 0, 2, new JLabel("Row Key: ", JLabel.RIGHT));
-        addToPanel(mainPanel, editConstraints, 1, 2, KEY = new JTextField());
         init(mainPanel, labelConstraints, editConstraints);
         
         JPanel container = new JPanel(new BorderLayout());
@@ -59,8 +53,7 @@ public abstract class EnhancedAbstractGUI extends AbstractSamplerGui
     public void clearGui()
     {
         super.clearGui();
-        KEY.setText("${__Random(1,1000)}");        
-        COLUMN_FAMILY.setText("Standard3");
+       
         initFields();
         if (Connection.connection != null)
         {
@@ -72,19 +65,11 @@ public abstract class EnhancedAbstractGUI extends AbstractSamplerGui
     public void configure(TestElement element)
     {
         super.configure(element);
-        KEY.setText(element.getPropertyAsString(EnhancedAbstractSampler.KEY));        
-        COLUMN_FAMILY.setText(element.getPropertyAsString(EnhancedAbstractSampler.COLUMN_FAMILY));
     }
     
     protected void configureTestElement(TestElement mc) 
     {
-        super.configureTestElement(mc);
-        if (mc instanceof EnhancedAbstractSampler)
-        {
-        	EnhancedAbstractSampler gSampler = (EnhancedAbstractSampler) mc;
-            gSampler.setKey(KEY.getText());
-            gSampler.setColumnFamily(COLUMN_FAMILY.getText());
-        }
+        super.configureTestElement(mc);       
     }
     
     public void addToPanel(JPanel panel, GridBagConstraints constraints, int col, int row, JComponent component)

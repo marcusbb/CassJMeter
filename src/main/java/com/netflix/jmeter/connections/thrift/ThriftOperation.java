@@ -117,8 +117,8 @@ public class ThriftOperation implements Operation
         }
         return new ResponseData("", 0, client.host, 0, key, nv);
     }
-
-    @Override
+   
+	@Override
     public ResponseData get(Object rkey, Object colName) throws OperationException
     {
         ByteBuffer rKey = kser.toByteBuffer(rkey);
@@ -174,16 +174,14 @@ public class ThriftOperation implements Operation
         }
         return new ResponseData(response.toString(), bytes, client.host, 0, rKey, Pair.create(startColumn, endColumn), null);
     }
-
     
     @Override
-	public ResponseData indexRangeSlice(Object indexName,
-			Object indexValue, Object startColumn, Object endColumn,
+	public ResponseData indexRangeSlice(Map<?, ?> nv, Object startColumn, Object endColumn,
 			boolean reversed, int count) throws OperationException {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+    
 	@Override
     public ResponseData putComposite(String key, String colName, ByteBuffer vbb) throws OperationException
     {
