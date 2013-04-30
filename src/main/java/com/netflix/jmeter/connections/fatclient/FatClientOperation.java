@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.db.ColumnFamily;
+import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.IColumn;
+import org.apache.cassandra.db.IMutation;
 import org.apache.cassandra.db.ReadCommand;
 import org.apache.cassandra.db.Row;
 import org.apache.cassandra.db.RowMutation;
@@ -48,7 +50,7 @@ public class FatClientOperation extends ThriftOperation
         change.add(new QueryPath(cp), val, System.currentTimeMillis());
         try
         {
-            StorageProxy.mutate(Arrays.asList(change), wConsistecy);
+        	StorageProxy.mutate(Arrays.asList(change), getLevelFrom(wConsistecy));
         }
         catch (Exception e)
         {
@@ -71,7 +73,7 @@ public class FatClientOperation extends ThriftOperation
         }
         try
         {
-            StorageProxy.mutate(Arrays.asList(change), wConsistecy);
+            StorageProxy.mutate(Arrays.asList(change), getLevelFrom(wConsistecy));
         }
         catch (Exception e)
         {
@@ -94,7 +96,7 @@ public class FatClientOperation extends ThriftOperation
         List<Row> rows;
         try
         {
-            rows = StorageProxy.read(commands, rConsistecy);
+            rows = StorageProxy.read(commands, getLevelFrom(rConsistecy));
             Row row = rows.get(0);
             ColumnFamily cf = row.cf;
 
@@ -132,7 +134,7 @@ public class FatClientOperation extends ThriftOperation
         List<Row> rows;
         try
         {
-            rows = StorageProxy.read(commands, rConsistecy);
+            rows = StorageProxy.read(commands, getLevelFrom(rConsistecy));
             Row row = rows.get(0);
             ColumnFamily cf = row.cf;
 
@@ -154,5 +156,28 @@ public class FatClientOperation extends ThriftOperation
         {
             throw new OperationException(e);
         }
+    }
+    
+    private static ConsistencyLevel getLevelFrom(org.apache.cassandra.thrift.ConsistencyLevel level) {
+    	switch(level) {
+    	case ONE:
+    		return ConsistencyLevel.ONE;
+    	case QUORUM:
+    		return ConsistencyLevel.QUORUM;
+    	case LOCAL_QUORUM:
+    		return ConsistencyLevel.LOCAL_QUORUM;
+    	case EACH_QUORUM:
+    		return ConsistencyLevel.QUORUM;
+    	case ALL:
+    		return ConsistencyLevel.ALL;
+    	case ANY:
+    		return ConsistencyLevel.ANY;
+    	case TWO:
+    		return ConsistencyLevel.TWO;
+    	case THREE:
+    		return ConsistencyLevel.THREE;
+    	
+    	}
+    	return ConsistencyLevel.ANY;
     }
 }
