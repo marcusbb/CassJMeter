@@ -195,9 +195,9 @@ public class AstyanaxOperation implements Operation
     	 Keyspace keyspace = AstyanaxConnection.instance.keyspace();
     	 MutationBatch m = keyspace.prepareMutationBatch();
     	 
-    	 HCMutationBatchImpl indexedBatch = new HCMutationBatchImpl(this.indexCoordinator);     	 
+    	 HCMutationBatchImpl indexedBatch = new HCMutationBatchImpl(m);     	 
     	         	 
-    	 ColumnListMutation<Object> mutation = indexedBatch.withIndexedRow(m, cfs, key);
+    	 ColumnListMutation<Object> mutation = indexedBatch.withRow(cfs, key);
              	 
          for (Map.Entry<?, ?> entry : nv.entrySet())
          {

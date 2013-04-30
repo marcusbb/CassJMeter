@@ -24,7 +24,7 @@
 		<dependency>
 			<groupId>com.netflix.astyanax</groupId>
 			<artifactId>astyanax</artifactId>
-			<version>1.56.25-RIM-SNAPSHOT</version>
+			<version>1.56.39-RIM-0.1-SNAPSHOT</version>
 		</dependency>		
 		<!-- setting to the same version as astyanax as hector pulls in r09 -->
 		<dependency>
